@@ -1,0 +1,363 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/anupmaster/scalpel/main/schemas/config.schema.json",
+  "title": "Scalpel Configuration",
+  "description": "Configuration schema for Scalpel v2 — extensible codebase health scanning, team orchestration, scoring, monitoring, and memory.",
+  "type": "object",
+  "required": ["version"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Reference to this JSON Schema for editor autocompletion and validation."
+    },
+    "version": {
+      "type": "string",
+      "description": "Configuration format version. Must match a supported Scalpel release.",
+      "enum": ["2.0"],
+      "default": "2.0"
+    },
+    "scan": {
+      "type": "object",
+      "description": "Controls which dimensions are scanned, paths to ignore, and custom secret patterns.",
+      "additionalProperties": false,
+      "properties": {
+        "dimensions": {
+          "type": "object",
+          "description": "Select, exclude, or extend the scan dimensions.",
+          "additionalProperties": false,
+          "properties": {
+            "include": {
+              "type": "array",
+              "description": "Dimensions to include. Use [\"all\"] to include every built-in dimension, or list specific ones.",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "all",
+                  "project_dna",
+                  "architecture",
+                  "git_forensics",
+                  "infrastructure",
+                  "database",
+                  "testing",
+                  "security",
+                  "code_quality",
+                  "performance",
+                  "documentation",
+                  "agent_ecosystem"
+                ]
+              },
+              "uniqueItems": true,
+              "minItems": 1,
+              "default": ["all"]
+            },
+            "exclude": {
+              "type": "array",
+              "description": "Dimensions to skip even if they appear in include. Useful with include: [\"all\"].",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "project_dna",
+                  "architecture",
+                  "git_forensics",
+                  "infrastructure",
+                  "database",
+                  "testing",
+                  "security",
+                  "code_quality",
+                  "performance",
+                  "documentation",
+                  "agent_ecosystem"
+                ]
+              },
+              "uniqueItems": true,
+              "default": []
+            },
+            "custom": {
+              "type": "array",
+              "description": "User-defined scan dimensions that extend the built-in set.",
+              "items": {
+                "$ref": "#/$defs/customDimension"
+              },
+              "default": []
+            }
+          }
+        },
+        "ignore_paths": {
+          "type": "array",
+          "description": "Glob patterns for directories and files the scanner should skip entirely.",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true,
+          "default": ["vendor/", "node_modules/", "generated/", ".next/", "dist/", "__pycache__/"]
+        },
+        "secret_patterns": {
+          "type": "array",
+          "description": "Additional regex patterns to detect exposed secrets, beyond the built-in set (AWS keys, Stripe keys, etc.).",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true,
+          "default": []
+        }
+      }
+    },
+    "team": {
+      "type": "object",
+      "description": "Controls agent team assembly — size, models, and custom specialist roles.",
+      "additionalProperties": false,
+      "properties": {
+        "max_agents": {
+          "type": "integer",
+          "description": "Maximum number of parallel agents the Architect may spawn in Phase 4.",
+          "minimum": 3,
+          "maximum": 6,
+          "default": 4
+        },
+        "default_model": {
+          "type": "string",
+          "description": "Model used for implementation agents (Phase 4 workers, monitoring).",
+          "enum": ["opus", "sonnet", "haiku"],
+          "default": "sonnet"
+        },
+        "architect_model": {
+          "type": "string",
+          "description": "Model used for strategic reasoning (Phase 2 questions, Phase 3 team design).",
+          "enum": ["opus", "sonnet", "haiku"],
+          "default": "opus"
+        },
+        "custom_roles": {
+          "type": "array",
+          "description": "Additional specialist roles the Architect can assign when conditions match.",
+          "items": {
+            "$ref": "#/$defs/customRole"
+          },
+          "default": []
+        }
+      }
+    },
+    "scoring": {
+      "type": "object",
+      "description": "Extend or adjust the health score algorithm with custom rules and thresholds.",
+      "additionalProperties": false,
+      "properties": {
+        "custom_rules": {
+          "type": "array",
+          "description": "User-defined scoring rules. Each rule runs a bash command; exit 0 means pass.",
+          "items": {
+            "$ref": "#/$defs/customScoringRule"
+          },
+          "default": []
+        },
+        "thresholds": {
+          "type": "object",
+          "description": "Score boundaries for health ratings. Each value is the minimum score for that tier.",
+          "additionalProperties": false,
+          "properties": {
+            "excellent": {
+              "type": "integer",
+              "description": "Minimum score for 'Excellent' rating.",
+              "minimum": 0,
+              "maximum": 100,
+              "default": 90
+            },
+            "good": {
+              "type": "integer",
+              "description": "Minimum score for 'Good' rating.",
+              "minimum": 0,
+              "maximum": 100,
+              "default": 75
+            },
+            "needs_improvement": {
+              "type": "integer",
+              "description": "Minimum score for 'Needs Improvement' rating.",
+              "minimum": 0,
+              "maximum": 100,
+              "default": 60
+            },
+            "at_risk": {
+              "type": "integer",
+              "description": "Minimum score for 'At Risk' rating. Scores below this are 'Critical'.",
+              "minimum": 0,
+              "maximum": 100,
+              "default": 40
+            }
+          }
+        }
+      }
+    },
+    "monitoring": {
+      "type": "object",
+      "description": "Settings for the /loop continuous monitoring mode (Phase 4+).",
+      "additionalProperties": false,
+      "properties": {
+        "interval_minutes": {
+          "type": "integer",
+          "description": "How often the monitor re-scans the project during a /loop session.",
+          "minimum": 5,
+          "maximum": 1440,
+          "default": 30
+        },
+        "alert_threshold": {
+          "type": "integer",
+          "description": "Health score drop (in points) that triggers an alert during monitoring.",
+          "minimum": 1,
+          "maximum": 50,
+          "default": 5
+        },
+        "auto_start": {
+          "type": "boolean",
+          "description": "If true, Scalpel enters monitoring mode automatically after Phase 5 completes.",
+          "default": false
+        }
+      }
+    },
+    "memory": {
+      "type": "object",
+      "description": "Controls persistent session memory across Scalpel runs.",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether Scalpel writes session summaries to the memory file after each run.",
+          "default": true
+        },
+        "path": {
+          "type": "string",
+          "description": "Path to the JSONL memory file, relative to the project root.",
+          "pattern": "^[a-zA-Z0-9_./-]+\\.jsonl$",
+          "default": ".scalpel/memory.jsonl"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "customDimension": {
+      "type": "object",
+      "description": "A user-defined scan dimension with a bash command and scoring behavior.",
+      "required": ["name", "description", "command", "scoring"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Unique identifier for this dimension (snake_case recommended).",
+          "pattern": "^[a-z][a-z0-9_]{1,48}[a-z0-9]$",
+          "minLength": 3,
+          "maxLength": 50
+        },
+        "description": {
+          "type": "string",
+          "description": "Human-readable explanation of what this dimension checks.",
+          "minLength": 10,
+          "maxLength": 200
+        },
+        "command": {
+          "type": "string",
+          "description": "Bash command to evaluate this dimension. Exit 0 = pass, non-zero = fail. Stdout is captured for the report.",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "scoring": {
+          "type": "object",
+          "description": "Points awarded on pass or fail.",
+          "required": ["pass", "fail"],
+          "additionalProperties": false,
+          "properties": {
+            "pass": {
+              "type": "integer",
+              "description": "Points added to the health score when the command exits 0.",
+              "minimum": 0,
+              "maximum": 10
+            },
+            "fail": {
+              "type": "integer",
+              "description": "Points added to the health score when the command exits non-zero (typically 0).",
+              "minimum": 0,
+              "maximum": 10
+            }
+          }
+        }
+      }
+    },
+    "customRole": {
+      "type": "object",
+      "description": "A custom specialist role that the Architect can assign to an agent when conditions are met.",
+      "required": ["name", "trigger", "jurisdiction", "prompt"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Display name for this role (e.g., 'i18n-specialist', 'accessibility-auditor').",
+          "pattern": "^[a-z][a-z0-9-]{1,38}[a-z0-9]$",
+          "minLength": 3,
+          "maxLength": 40
+        },
+        "trigger": {
+          "type": "string",
+          "description": "Condition that must be true for this role to be included. Evaluated as a bash test (exit 0 = include).",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "jurisdiction": {
+          "type": "array",
+          "description": "Glob patterns for files this role is allowed to read and modify.",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "prompt": {
+          "type": "string",
+          "description": "System prompt injected for this specialist agent. Defines its expertise and operating rules.",
+          "minLength": 20,
+          "maxLength": 5000
+        }
+      }
+    },
+    "customScoringRule": {
+      "type": "object",
+      "description": "A custom scoring rule that adds or deducts points based on a bash command result.",
+      "required": ["name", "check", "message"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Short identifier for this rule.",
+          "minLength": 3,
+          "maxLength": 60
+        },
+        "check": {
+          "type": "string",
+          "description": "Bash command to evaluate. Exit 0 = rule passes (bonus applied). Non-zero = rule fails (deduction applied).",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "deduction": {
+          "type": "integer",
+          "description": "Points deducted when the check fails (must be negative or zero).",
+          "minimum": -5,
+          "maximum": 0,
+          "default": 0
+        },
+        "bonus": {
+          "type": "integer",
+          "description": "Points awarded when the check passes.",
+          "minimum": 0,
+          "maximum": 10,
+          "default": 0
+        },
+        "message": {
+          "type": "string",
+          "description": "Human-readable message shown in the report when this rule triggers.",
+          "minLength": 5,
+          "maxLength": 200
+        }
+      }
+    }
+  }
+}

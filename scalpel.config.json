@@ -1,0 +1,86 @@
+{
+  "$schema": "https://raw.githubusercontent.com/anupmaster/scalpel/main/schemas/config.schema.json",
+  "version": "2.0",
+  "scan": {
+    "dimensions": {
+      "include": ["all"],
+      "exclude": ["performance"],
+      "custom": [
+        {
+          "name": "accessibility_audit",
+          "description": "Check that all images have alt attributes and forms have associated labels",
+          "command": "! grep -rn '<img ' --include='*.tsx' --include='*.jsx' src/ | grep -v 'alt=' | head -1 | grep -q '.'",
+          "scoring": { "pass": 5, "fail": 0 }
+        },
+        {
+          "name": "bundle_size_check",
+          "description": "Verify the production bundle first-load JS stays under 200KB",
+          "command": "test -d .next && find .next/static/chunks -name '*.js' -exec du -cb {} + | tail -1 | awk '{exit ($1 > 204800)}'",
+          "scoring": { "pass": 5, "fail": 0 }
+        }
+      ]
+    },
+    "ignore_paths": [
+      "node_modules/",
+      ".next/",
+      "dist/",
+      "coverage/",
+      "public/locales/"
+    ],
+    "secret_patterns": [
+      "NEXT_PUBLIC_STRIPE_SECRET",
+      "INTERNAL_API_TOKEN"
+    ]
+  },
+  "team": {
+    "max_agents": 4,
+    "default_model": "sonnet",
+    "architect_model": "opus",
+    "custom_roles": [
+      {
+        "name": "i18n-specialist",
+        "trigger": "test -d src/locales || test -d public/locales || grep -q 'next-intl\\|react-i18next\\|i18n' package.json",
+        "jurisdiction": [
+          "src/locales/**",
+          "public/locales/**",
+          "src/**/i18n*",
+          "next-i18next.config.*"
+        ],
+        "prompt": "You are an internationalization specialist. Audit translation files for missing keys across locales, ensure all user-facing strings are extracted (no hardcoded text in components), validate locale fallback chains, and check that date/number formatting uses the i18n library rather than raw toLocaleString calls."
+      }
+    ]
+  },
+  "scoring": {
+    "custom_rules": [
+      {
+        "name": "no_console_log_in_components",
+        "check": "! grep -rn 'console\\.log' --include='*.tsx' --include='*.jsx' src/components/ | grep -q '.'",
+        "deduction": -3,
+        "bonus": 0,
+        "message": "console.log statements found in React components — remove or replace with a proper logger."
+      },
+      {
+        "name": "env_example_in_sync",
+        "check": "test -f .env.example && diff <(grep -oE '^[A-Z_]+' .env.example | sort) <(grep -oE '^[A-Z_]+' .env.local | sort) > /dev/null 2>&1",
+        "deduction": -2,
+        "bonus": 3,
+        "message": ".env.example and .env.local have mismatched variable names — keep them in sync."
+      }
+    ],
+    "thresholds": {
+      "excellent": 90,
+      "good": 75,
+      "needs_improvement": 60,
+      "at_risk": 40
+    }
+  },
+  "monitoring": {
+    "interval_minutes": 30,
+    "alert_threshold": 5,
+    "auto_start": false
+  },
+  "memory": {
+    "enabled": true,
+    "path": ".scalpel/memory.jsonl"
+  }
+}
