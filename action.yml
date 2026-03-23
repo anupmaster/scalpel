@@ -1,0 +1,226 @@
+name: 'Scalpel Codebase Vitals'
+description: 'Surgical codebase health scanner — scores your repo on 12 dimensions and posts a Vitals report on PRs.'
+author: 'anupmaster'
+
+branding:
+  icon: 'activity'
+  color: 'red'
+
+inputs:
+  fail-below:
+    description: 'Minimum health score to pass (0-100). Set to 0 to never fail.'
+    required: false
+    default: '0'
+  comment:
+    description: 'Post Vitals report as PR comment'
+    required: false
+    default: 'true'
+  format:
+    description: 'Output format: markdown, json, or ci'
+    required: false
+    default: 'markdown'
+
+outputs:
+  score:
+    description: 'Health score (0-100)'
+    value: ${{ steps.scan-pr.outputs.score }}
+  rating:
+    description: 'Rating string (Excellent/Good/Needs Improvement/At Risk/Critical)'
+    value: ${{ steps.scan-pr.outputs.rating }}
+  report:
+    description: 'Full report in requested format'
+    value: ${{ steps.report.outputs.report }}
+  delta:
+    description: 'Score change vs base branch (e.g., "+3" or "-5")'
+    value: ${{ steps.delta.outputs.delta }}
+
+runs:
+  using: composite
+  steps:
+    # ------------------------------------------------------------------
+    # Step 1: Scan the PR branch (score only)
+    # ------------------------------------------------------------------
+    - name: Scan PR branch
+      id: scan-pr
+      shell: bash
+      run: |
+        SCANNER="${{ github.action_path }}/src/scanner.sh"
+        chmod +x "$SCANNER"
+
+        pr_score=$("$SCANNER" "${{ github.workspace }}" --score-only 2>/dev/null || echo "0")
+        # Sanitize — keep only the numeric portion
+        pr_score=$(echo "$pr_score" | grep -Eo '[0-9]+' | head -1)
+        pr_score="${pr_score:-0}"
+
+        # Derive rating from score
+        if   [ "$pr_score" -ge 90 ]; then rating="Excellent"
+        elif [ "$pr_score" -ge 75 ]; then rating="Good"
+        elif [ "$pr_score" -ge 60 ]; then rating="Needs Improvement"
+        elif [ "$pr_score" -ge 40 ]; then rating="At Risk"
+        else                               rating="Critical"
+        fi
+
+        echo "score=$pr_score"   >> "$GITHUB_OUTPUT"
+        echo "rating=$rating"    >> "$GITHUB_OUTPUT"
+        echo "PR branch score: $pr_score ($rating)"
+
+    # ------------------------------------------------------------------
+    # Step 2: Scan the base branch (score only) and compute delta
+    # ------------------------------------------------------------------
+    - name: Scan base branch and compute delta
+      id: delta
+      shell: bash
+      run: |
+        SCANNER="${{ github.action_path }}/src/scanner.sh"
+        pr_score="${{ steps.scan-pr.outputs.score }}"
+        base_score="0"
+
+        # Only compute delta when running in a pull request context
+        if [ -n "${{ github.event.pull_request.base.ref }}" ]; then
+          BASE_REF="${{ github.event.pull_request.base.ref }}"
+          CURRENT_REF=$(git -C "${{ github.workspace }}" rev-parse HEAD)
+
+          # Attempt to checkout the base branch
+          if git -C "${{ github.workspace }}" checkout "origin/${BASE_REF}" --quiet 2>/dev/null; then
+            base_score=$("$SCANNER" "${{ github.workspace }}" --score-only 2>/dev/null || echo "0")
+            base_score=$(echo "$base_score" | grep -Eo '[0-9]+' | head -1)
+            base_score="${base_score:-0}"
+            # Return to the PR commit
+            git -C "${{ github.workspace }}" checkout "$CURRENT_REF" --quiet 2>/dev/null || true
+          else
+            echo "::warning::Could not checkout base branch origin/${BASE_REF} — delta will be 0"
+          fi
+        fi
+
+        delta=$(( pr_score - base_score ))
+        if [ "$delta" -ge 0 ]; then
+          delta_str="+${delta}"
+        else
+          delta_str="${delta}"
+        fi
+
+        echo "delta=$delta_str"        >> "$GITHUB_OUTPUT"
+        echo "base_score=$base_score"  >> "$GITHUB_OUTPUT"
+        echo "Base score: $base_score | Delta: $delta_str"
+
+    # ------------------------------------------------------------------
+    # Step 3: Generate the full report in the requested format
+    # ------------------------------------------------------------------
+    - name: Generate full report
+      id: report
+      shell: bash
+      run: |
+        SCANNER="${{ github.action_path }}/src/scanner.sh"
+        FORMAT="${{ inputs.format }}"
+
+        case "$FORMAT" in
+          json)     flag="--json" ;;
+          ci)       flag="--ci" ;;
+          markdown) flag="--markdown" ;;
+          *)        flag="--markdown" ;;
+        esac
+
+        report=$("$SCANNER" "${{ github.workspace }}" $flag 2>/dev/null || echo "Report generation failed.")
+
+        # Write to a temp file so we can use it in the comment step
+        report_file="${{ runner.temp }}/scalpel-report.txt"
+        echo "$report" > "$report_file"
+
+        # Set output using a delimiter for multiline content
+        delimiter="SCALPEL_EOF_$(date +%s)"
+        echo "report<<${delimiter}"   >> "$GITHUB_OUTPUT"
+        echo "$report"                >> "$GITHUB_OUTPUT"
+        echo "${delimiter}"           >> "$GITHUB_OUTPUT"
+
+    # ------------------------------------------------------------------
+    # Step 4: Post or update PR comment
+    # ------------------------------------------------------------------
+    - name: Post PR comment
+      if: >-
+        inputs.comment == 'true'
+        && github.event_name == 'pull_request'
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        PR_NUMBER="${{ github.event.pull_request.number }}"
+        REPO="${{ github.repository }}"
+        PR_SCORE="${{ steps.scan-pr.outputs.score }}"
+        PR_RATING="${{ steps.scan-pr.outputs.rating }}"
+        BASE_SCORE="${{ steps.delta.outputs.base_score }}"
+        DELTA="${{ steps.delta.outputs.delta }}"
+        REPORT_FILE="${{ runner.temp }}/scalpel-report.txt"
+
+        # Build delta indicator
+        delta_num="${DELTA//[!0-9-]/}"
+        if [ "$delta_num" -lt 0 ] 2>/dev/null; then
+          delta_badge="${DELTA} :warning:"
+        elif [ "$delta_num" -gt 0 ] 2>/dev/null; then
+          delta_badge="${DELTA} :white_check_mark:"
+        else
+          delta_badge="${DELTA}"
+        fi
+
+        # Build the comment body
+        COMMENT_MARKER="<!-- scalpel-vitals -->"
+        BODY="${COMMENT_MARKER}
+        ## :hocho: Scalpel Codebase Vitals
+
+        **Health Score: ${PR_SCORE}/100** — ${PR_RATING}
+
+        | Metric | Before | After | Delta |
+        |--------|--------|-------|-------|
+        | Score  | ${BASE_SCORE} | ${PR_SCORE} | ${delta_badge} |
+
+        <details>
+        <summary>Full Report</summary>
+
+        $(cat "$REPORT_FILE")
+
+        </details>
+
+        ---
+        *Generated by [Scalpel](https://github.com/anupmaster/scalpel) v2.0*"
+
+        # Check for an existing Scalpel comment on this PR
+        EXISTING_COMMENT_ID=$(
+          gh api \
+            -H "Accept: application/vnd.github+json" \
+            "/repos/${REPO}/issues/${PR_NUMBER}/comments" \
+            --paginate \
+            --jq '.[] | select(.body | contains("<!-- scalpel-vitals -->")) | .id' \
+          | head -1
+        )
+
+        if [ -n "$EXISTING_COMMENT_ID" ]; then
+          echo "Updating existing comment ${EXISTING_COMMENT_ID}"
+          gh api \
+            --method PATCH \
+            -H "Accept: application/vnd.github+json" \
+            "/repos/${REPO}/issues/comments/${EXISTING_COMMENT_ID}" \
+            -f body="$BODY"
+        else
+          echo "Creating new comment"
+          gh api \
+            --method POST \
+            -H "Accept: application/vnd.github+json" \
+            "/repos/${REPO}/issues/${PR_NUMBER}/comments" \
+            -f body="$BODY"
+        fi
+
+    # ------------------------------------------------------------------
+    # Step 5: Enforce minimum score threshold
+    # ------------------------------------------------------------------
+    - name: Enforce score threshold
+      if: inputs.fail-below != '0'
+      shell: bash
+      run: |
+        pr_score="${{ steps.scan-pr.outputs.score }}"
+        threshold="${{ inputs.fail-below }}"
+
+        if [ "$pr_score" -lt "$threshold" ]; then
+          echo "::error::Scalpel health score ${pr_score} is below the required minimum of ${threshold}"
+          exit 1
+        else
+          echo "Score ${pr_score} meets the threshold of ${threshold}"
+        fi

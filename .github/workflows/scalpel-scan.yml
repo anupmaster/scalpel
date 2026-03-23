@@ -1,0 +1,31 @@
+name: Scalpel Health Check
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Scalpel Scanner
+        id: scalpel
+        uses: anupmaster/scalpel@v2
+        with:
+          fail-below: '60'
+          comment: 'true'
+
+      - name: Print results
+        run: |
+          echo "Score: ${{ steps.scalpel.outputs.score }}"
+          echo "Rating: ${{ steps.scalpel.outputs.rating }}"
+          echo "Delta: ${{ steps.scalpel.outputs.delta }}"

@@ -11,6 +11,8 @@
   </p>
 </p>
 
+> Built in one Claude Code session by a solo founder. One developer. A full surgical team. Zero employees.
+
 <br>
 
 > **Scalpel** plugs into any project like a USB forensic toolkit. It performs a deep diagnostic scan of your entire codebase — git history, architecture, dependencies, infrastructure, tech debt — then assembles a custom AI surgical team calibrated to YOUR project. When done, unplug it. Zero trace. Zero residue. Just improved code.
@@ -142,19 +144,76 @@ claude                          # or codex, gemini-cli, opencode
 
 <br>
 
+## 🔬 Standalone Scanner
+
+Run the scanner directly from your terminal. No subscription. No API keys. No tokens. Pure bash.
+
+```bash
+# Pretty terminal output (default)
+./src/scanner.sh
+
+# Machine-readable JSON
+./src/scanner.sh --json
+
+# GitHub Actions annotations (for CI pipelines)
+./src/scanner.sh --ci
+
+# Markdown report (for PR comments)
+./src/scanner.sh --markdown
+
+# Just the score (for threshold checks)
+./src/scanner.sh --score-only
+```
+
+Scan any directory:
+
+```bash
+./src/scanner.sh /path/to/project --json
+```
+
+The scanner runs the full 12-dimension diagnostic and produces a health score from 0-100, all without touching an AI agent. Pipe the output into your existing tools, dashboards, or CI checks.
+
+<br>
+
 ## 🔬 Works With
 
-| Agent | Status | How |
-|-------|--------|-----|
+| Agent | Status | Adapter |
+|-------|--------|---------|
 | **Claude Code** | ✅ Full Support | Native `.claude/agents/` integration |
-| **Codex CLI** | ✅ Full Support | Via agent instructions |
-| **Gemini CLI** | ✅ Full Support | Via system prompt injection |
-| **OpenCode** | ✅ Full Support | Via agent config |
-| **Cursor** | 🔄 Partial | Via `.cursorrules` adapter |
-| **Windsurf** | 🔄 Partial | Via rules adapter |
-| **Aider** | 🔄 Partial | Via conventions file |
+| **Codex CLI** | ✅ Full Support | `adapters/codex.md` |
+| **Gemini CLI** | ✅ Full Support | `adapters/gemini.md` |
+| **OpenCode** | ✅ Full Support | `adapters/opencode.md` |
+| **Cursor** | ✅ Full Support | `adapters/cursor.md` |
+| **Windsurf** | ✅ Full Support | `adapters/windsurf.md` |
+| **Aider** | ✅ Full Support | `adapters/aider.md` |
 
 > Scalpel's reconnaissance engine is pure bash + git. It works everywhere. The orchestration layer adapts to your agent.
+
+<br>
+
+## 🚀 GitHub Action
+
+Add Scalpel health checks to every pull request:
+
+```yaml
+name: Scalpel Health Check
+on: [pull_request]
+
+jobs:
+  scalpel:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full git history for forensics
+
+      - uses: anupmaster/scalpel@v2
+        with:
+          mode: ci
+          fail-below: 60
+```
+
+The action runs the standalone scanner, posts a Markdown health report as a PR comment, and fails the check if the score drops below your threshold. No API keys required.
 
 <br>
 
@@ -235,7 +294,7 @@ Scalpel monitors every teammate in real-time:
 | Introduced a regression | -20 |
 | Ignored established project patterns | -10 |
 
-**Score < 70** → Scalpel re-issues instructions with corrections.  
+**Score < 70** → Scalpel re-issues instructions with corrections.
 **Score < 50** → Scalpel terminates the agent and redistributes work.
 
 <br>
@@ -263,25 +322,56 @@ Scalpel is designed like a **forensic USB toolkit**:
 
 <br>
 
+## 🆕 What's New in v2
+
+- **Standalone Scanner** — 827-line bash script that runs the full 12-dimension diagnostic from your terminal. Five output modes: pretty, JSON, CI annotations, Markdown, and score-only.
+- **Token-Efficient Architecture** — Scanner output replaces verbose in-agent scanning, saving thousands of tokens per session.
+- **Session Memory** — Persistent JSONL memory file (`.scalpel/memory.jsonl`) tracks decisions, scores, and context across sessions.
+- **Multi-Agent Adapters** — Full support for all 7 agents (Claude Code, Codex, Gemini CLI, OpenCode, Cursor, Windsurf, Aider) via dedicated adapter files.
+- **Continuous Monitoring** — `/loop` mode re-scans at configurable intervals and alerts on score drops during long sessions.
+- **Surgical Q&A Protocol** — Structured 5-7 question consultation in Phase 2 that calibrates the team to your actual priorities.
+- **GitHub Action** — Drop-in CI health checks with configurable fail thresholds for PR gating.
+- **Extensible Configuration** — `scalpel.config.json` with JSON Schema validation for custom dimensions, custom roles, custom scoring rules, monitoring, and memory. See [docs/CONFIGURATION.md](docs/CONFIGURATION.md).
+
+<br>
+
 ## 📂 Project Structure
 
 ```
 scalpel/
 ├── src/
-│   └── scalpel.md           # The agent brain
-├── install.sh                # One-command plug-in
-├── uninstall.sh              # One-command plug-out (zero trace)
+│   ├── scalpel.md               # The agent brain (orchestration prompt)
+│   └── scanner.sh               # Standalone 12-dimension scanner
+├── adapters/
+│   ├── codex.md                 # Codex CLI adapter
+│   ├── gemini.md                # Gemini CLI adapter
+│   ├── opencode.md              # OpenCode adapter
+│   ├── cursor.md                # Cursor adapter
+│   ├── windsurf.md              # Windsurf adapter
+│   └── aider.md                 # Aider adapter
+├── schemas/
+│   └── config.schema.json       # JSON Schema for scalpel.config.json
+├── tests/
+│   └── scanner/
+│       ├── run_tests.sh         # Scanner test runner
+│       ├── setup_fixtures.sh    # Test fixture generator
+│       └── fixtures/            # Next.js, Python, empty-repo fixtures
 ├── docs/
-│   ├── SPECIFICATION.md      # Full technical specification
-│   ├── CONFIGURATION.md      # Customization guide
-│   └── EXAMPLES.md           # Real-world usage examples
+│   ├── SPECIFICATION.md         # Full technical specification
+│   ├── CONFIGURATION.md         # Customization guide
+│   └── EXAMPLES.md              # Real-world usage examples
 ├── examples/
-│   ├── nextjs-project/       # Example config for Next.js
-│   ├── python-api/           # Example config for FastAPI/Django
-│   └── rust-cli/             # Example config for Rust projects
-├── CONTRIBUTING.md           # How to contribute
-├── LICENSE                   # MIT
-└── README.md                 # You are here
+│   ├── nextjs-project/          # Example config for Next.js
+│   ├── python-api/              # Example config for FastAPI/Django
+│   └── rust-cli/                # Example config for Rust projects
+├── action.yml                   # GitHub Action definition
+├── scalpel.config.json          # Default configuration
+├── install.sh                   # One-command plug-in
+├── uninstall.sh                 # One-command plug-out (zero trace)
+├── CHANGELOG.md                 # Version history
+├── CONTRIBUTING.md              # How to contribute
+├── LICENSE                      # MIT
+└── README.md                    # You are here
 ```
 
 <br>
