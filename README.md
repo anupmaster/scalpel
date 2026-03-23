@@ -16,7 +16,7 @@
 </p>
 
 <p align="center">
-  <sub>Created by <a href="https://github.com/anupmaster"><strong>Anup Karanjkar</strong></a> &middot; 12+ years building digital products &middot; Powered by <a href="https://absomind.com">Absomind Technologies</a></sub>
+  <sub>Created by <a href="https://github.com/anupmaster"><strong>Anup Karanjkar</strong></a> &middot; 12+ years building digital products</sub>
 </p>
 
 <br>
@@ -382,5 +382,5 @@ Scalpel makes **project intelligence** the first step, not an afterthought.
 </p>
 
 <p align="center">
-  <sub>Created by <a href="https://github.com/anupmaster"><strong>Anup Karanjkar</strong></a> &middot; <a href="https://anupkaranjkar.com">anupkaranjkar.com</a> &middot; <a href="https://absomind.com">Absomind Technologies</a></sub>
+  <sub>Created by <a href="https://github.com/anupmaster"><strong>Anup Karanjkar</strong></a> &middot; <a href="https://anupkaranjkar.com">anupkaranjkar.com</a></sub>
 </p>
