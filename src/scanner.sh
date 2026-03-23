@@ -3,6 +3,8 @@ set -uo pipefail
 
 # Scalpel Scanner v2.0 — 12-Dimension Codebase Health Diagnostic
 # Pure bash. Zero AI. Zero external dependencies beyond standard Unix tools.
+# Copyright (c) 2026 Anup Karanjkar (@anupmaster) — MIT License
+# https://github.com/anupmaster/scalpel
 
 SCANNER_VERSION="2.0"
 PROJECT_DIR=""
