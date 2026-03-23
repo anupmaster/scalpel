@@ -244,15 +244,19 @@ Scalpel monitors every teammate in real-time:
 
 | Violation | Points |
 |-----------|:------:|
-| Modified file outside jurisdiction | -10 |
+| **Removed or downgraded existing functionality** | **-25** |
+| **Simplified output/UI below original quality** | **-25** |
+| Introduced a regression (existing tests fail) | -20 |
 | Broke the build | -15 |
+| Modified file outside jurisdiction | -10 |
 | Used `any` type or skipped error handling | -10 |
-| Left `console.log` in production code | -5 |
-| Introduced a regression | -20 |
 | Ignored established project patterns | -10 |
+| Left `console.log` in production code | -5 |
 
 **Score < 70** — Scalpel re-issues instructions with corrections.<br>
 **Score < 50** — Agent terminated. Work redistributed.
+
+> The harshest penalties are for quality downgrades, not build breaks. A broken build is obvious. A silent feature removal ships unnoticed and erodes trust.
 
 <br>
 
@@ -284,6 +288,7 @@ Scalpel is designed like a **forensic USB toolkit**:
 | **Post-Surgery Q&A** | Ask any surgeon about their decisions after delivery |
 | **GitHub Action** | Automated PR health checks with merge gating |
 | **Extensible Config** | `scalpel.config.json` — custom dimensions, roles, scoring |
+| **Anti-Regression System** | Agents can never silently remove or downgrade features. Mandatory before/after verification. |
 
 <br>
 
