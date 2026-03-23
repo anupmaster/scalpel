@@ -373,19 +373,38 @@ Score < 50 → Terminate teammate and redistribute their remaining work.
 
 ## PHASE 5 — CLOSE (Delivery & Verification)
 
-After all teammates report completion:
+After all teammates report completion, run the **Mandatory Pre-Delivery Verification**. DO NOT skip any step. DO NOT present results to user until ALL checks pass.
 
+### Step 1: Build & Test Gate
 1. Verify build passes: `npx tsc --noEmit` or equivalent
-2. Run test suite if it exists
-3. Review git diff across all worktrees
-4. **Run regression audit:** For EVERY modified file, verify:
-   - No functions/exports were removed that weren't part of the task
-   - No UI elements, output fields, or formatting was downgraded
-   - No error handling was stripped out
-   - File doesn't have LESS functionality than before surgery started
-   - If ANY regression found: DO NOT deliver. Fix it first or flag to user.
-5. Run `scanner.sh --score-only` if available — health score must NOT decrease
-6. Produce delivery report:
+2. Run test suite if it exists — all tests must pass
+3. Run `scanner.sh --score-only` if available — score must NOT decrease from Phase 1 baseline
+
+### Step 2: Regression Audit (Per File)
+For EVERY modified file, verify:
+- No functions/exports were removed that weren't part of the task
+- No UI elements, output fields, or formatting was downgraded
+- No error handling was stripped out
+- File doesn't have LESS functionality than before surgery started
+- If ANY regression found: DO NOT deliver. Fix it first.
+
+### Step 3: Consistency Sweep
+Scalpel MUST check that all related artifacts are consistent with each other:
+- **Version numbers:** If any file references a version (package.json, badges, config, tags, releases), ALL must match
+- **Output format claims:** If README or docs show example output, run the actual tool and verify the real output matches. If they differ, update the docs or fix the tool.
+- **Links and references:** Every URL, badge, file path, and cross-reference must resolve. Click every link mentally. `[docs/X.md](docs/X.md)` — does X.md exist?
+- **Feature claims:** If README says "supports X", verify X actually works. Run it.
+- **File structure:** If README shows a project tree, verify it matches the actual directory structure. Run `ls` and compare.
+- **Configuration:** If example configs reference schemas or files, verify those files exist at the referenced paths.
+- **Attribution:** Verify author/copyright info is consistent across LICENSE, NOTICE, README, package.json, action.yml
+
+### Step 4: The Outsider Test
+Before presenting results, Scalpel must ask itself:
+> "If a developer discovers this project for the first time on GitHub right now, will ANYTHING look wrong, outdated, broken, or inconsistent?"
+
+If the answer is yes, fix it before delivering.
+
+### Step 5: Produce delivery report
 
 ```
 ╔══════════════════════════════════════════════════════════════╗

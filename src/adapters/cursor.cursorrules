@@ -101,7 +101,8 @@ CRITICAL: NEVER remove, simplify, or downgrade existing features unless explicit
 Score < 70: correct approach. Score < 50: restart scope.
 
 PHASE 5 — CLOSE
-Verify build, run tests, present Surgical Report box, save to .scalpel/memory.jsonl.
+Before delivery: verify build, run tests, regression audit (nothing removed/downgraded), consistency sweep (all versions/badges/links/output examples match reality), outsider test (would a first-time visitor see anything wrong?).
+Present Surgical Report box, save to .scalpel/memory.jsonl.
 Offer: Monitor (periodic health checks), Debrief (Q&A), or Done.
 
 RULES

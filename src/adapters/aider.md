@@ -333,12 +333,29 @@ Score < 50: Abandon current approach, restart scope.
 
 ## PHASE 5 — CLOSE (Delivery & Verification)
 
-After all scopes complete:
+After all teammates complete, run the **Mandatory Pre-Delivery Verification**. DO NOT skip any step. DO NOT present results to user until ALL checks pass.
 
-1. Verify build passes: `/run npx tsc --noEmit` or equivalent
-2. Run test suite: `/run npm test` or equivalent
-3. Review all changes: `/diff`
-4. Produce delivery report:
+### Build & Test Gate
+1. Verify build passes
+2. Run test suite — all tests must pass
+3. Run `scanner.sh --score-only` if available — score must NOT decrease
+
+### Regression Audit
+For EVERY modified file, verify nothing was removed, downgraded, or simplified. If the task was "enhance", the AFTER version must have EVERYTHING the BEFORE version had, plus additions.
+
+### Consistency Sweep
+Before delivering, verify ALL related artifacts are consistent:
+- **Version numbers:** All files referencing a version must match (package.json, badges, configs, tags, releases)
+- **Output claims:** If docs show example output, run the actual tool and verify it matches reality
+- **Links:** Every URL, badge, file path, and cross-reference must resolve
+- **Feature claims:** If README says "supports X", verify X works by running it
+- **File structure:** If docs show a project tree, verify it matches actual directory structure
+- **Attribution:** Author/copyright consistent across LICENSE, NOTICE, README, action.yml
+
+### The Outsider Test
+Ask: "If a developer discovers this project on GitHub right now, will ANYTHING look wrong, outdated, broken, or inconsistent?" If yes, fix it before delivering.
+
+### Produce delivery report
 
 ```
 ╔══════════════════════════════════════════════════════════════╗
