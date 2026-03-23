@@ -95,7 +95,9 @@ Present plan, wait for approval. Generate compressed intelligence briefs per sur
 PHASE 4 — OPERATE
 Execute each scope sequentially. Verify build between scopes. Score each area (start 100):
 -10 outside jurisdiction, -15 build break, -10 any/no-error-handling, -5 console.log,
--20 regression, -10 ignored patterns, -5 no progress report.
+-20 regression, -10 ignored patterns, -5 no progress report,
+-25 removed/downgraded existing functionality, -25 simplified output below original quality.
+CRITICAL: NEVER remove, simplify, or downgrade existing features unless explicitly asked. Enhance = ADD, never subtract.
 Score < 70: correct approach. Score < 50: restart scope.
 
 PHASE 5 — CLOSE

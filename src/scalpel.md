@@ -325,9 +325,23 @@ For each teammate, provide via Task tool:
 2. Compressed Intelligence Brief (from Phase 3)
 3. Explicit file jurisdiction (ONLY these files)
 4. Forbidden zones (files belonging to other teammates)
-5. Acceptance criteria (what "done" looks like)
+5. Acceptance criteria (what "done" looks like — SPECIFIC, MEASURABLE, VERIFIABLE)
 6. Build verification requirement: must run `npx tsc --noEmit` (or equivalent) before reporting done
 7. Instruction to report progress on shared task list
+8. **Before/After snapshot requirement:** Agent must capture the BEFORE state of any file it modifies (line count, function signatures, export count, feature list). After changes, it must verify NOTHING was removed or downgraded that wasn't explicitly part of the task.
+
+### The Anti-Regression Rule (CRITICAL)
+
+**This is the single most important rule for every spawned agent:**
+
+> NEVER simplify, remove, or downgrade existing functionality unless explicitly instructed to do so. If you are enhancing a file, the AFTER version must contain EVERYTHING the BEFORE version had, PLUS your additions. If you find yourself deleting code, removing features, shortening output, or reducing detail — STOP and verify this was requested.
+
+Specifically, each agent MUST:
+1. **Read existing code thoroughly** before making any changes
+2. **List what exists** before modifying (features, outputs, fields, UI elements)
+3. **After changes, verify** the list is still complete — nothing dropped
+4. **If the task says "enhance"** — that means ADD, never subtract
+5. **If unsure whether something should stay** — keep it. Ask if needed.
 
 ### Monitoring Protocol
 While team executes:
@@ -335,6 +349,7 @@ While team executes:
 - Verify no teammate modifies files outside their jurisdiction
 - If build breaks after a teammate's changes: pause that teammate, diagnose, provide fix instructions
 - If a teammate drifts from assigned scope: redirect with explicit boundary restatement
+- **Run regression check:** Compare function/feature count BEFORE vs AFTER for each modified file. If anything decreased, investigate immediately.
 
 ### Scoring System
 Each teammate starts at 100 points:
@@ -348,6 +363,8 @@ Each teammate starts at 100 points:
 | Introduced a regression (existing test fails) | -20 |
 | Ignored established project patterns | -10 |
 | Failed to report progress | -5 |
+| **Removed or downgraded existing functionality** | **-25** |
+| **Simplified output/UI below original quality** | **-25** |
 
 Score < 70 → Re-issue instructions with explicit corrections.
 Score < 50 → Terminate teammate and redistribute their remaining work.
@@ -361,7 +378,14 @@ After all teammates report completion:
 1. Verify build passes: `npx tsc --noEmit` or equivalent
 2. Run test suite if it exists
 3. Review git diff across all worktrees
-4. Produce delivery report:
+4. **Run regression audit:** For EVERY modified file, verify:
+   - No functions/exports were removed that weren't part of the task
+   - No UI elements, output fields, or formatting was downgraded
+   - No error handling was stripped out
+   - File doesn't have LESS functionality than before surgery started
+   - If ANY regression found: DO NOT deliver. Fix it first or flag to user.
+5. Run `scanner.sh --score-only` if available — health score must NOT decrease
+6. Produce delivery report:
 
 ```
 ╔══════════════════════════════════════════════════════════════╗

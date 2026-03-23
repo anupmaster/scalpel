@@ -308,6 +308,8 @@ Each teammate starts at 100 points:
 | Left console.log in production code | -5 |
 | Introduced a regression | -20 |
 | Ignored established project patterns | -10 |
+| **Removed or downgraded existing functionality** | **-25** |
+| **Simplified output/UI below original quality** | **-25** |
 | Failed to report progress | -5 |
 
 Score < 70: Re-issue instructions with corrections.
