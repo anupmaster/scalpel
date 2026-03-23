@@ -78,7 +78,7 @@ Run the standalone scanner. No subscription. No API keys. No tokens. **Pure bash
   ║  Tests      : 0 files CRITICAL (None)                        ║
   ║  Tech Debt  : 47 TODOs · 12 FIXMEs · 3 HACKs               ║
   ║  Git Health : 1247 commits · 5 branches · 3 contributors    ║
-  ║  Bundle     : 847MB node_modules                             ║
+  ║  Bundle     : 284MB node_modules · 12MB dist                  ║
   ║  Security   : 2 issues found                                 ║
   ║                                                              ║
   ║  HEALTH SCORE: 64/100 — Needs Improvement                   ║
@@ -298,7 +298,7 @@ Scalpel is designed like a **forensic USB toolkit**:
 scalpel/
 ├── src/
 │   ├── scalpel.md                # Agent brain — orchestration prompt
-│   ├── scanner.sh                # Standalone scanner (827 lines, pure bash)
+│   ├── scanner.sh                # Standalone scanner (pure bash, zero deps)
 │   └── adapters/                 # 6 agent-specific adapters
 │       ├── codex.md
 │       ├── gemini.md
@@ -314,10 +314,18 @@ scalpel/
 │   ├── SPECIFICATION.md          # Technical specification
 │   ├── CONFIGURATION.md          # Config customization guide
 │   └── BLUEPRINT-V2.md           # Development blueprint
+├── examples/                     # Real-world usage examples
+│   ├── nextjs-ecommerce.md
+│   ├── parallel-debugging.md
+│   └── scan-only-health-check.md
+├── .github/
+│   └── workflows/
+│       └── scalpel-scan.yml      # Example CI workflow
 ├── action.yml                    # GitHub Action definition
 ├── scalpel.config.json           # Default extensible config
 ├── install.sh                    # One-command plug-in (auto-detects agent)
 ├── uninstall.sh                  # Zero-trace removal
+├── NOTICE                        # Authorship declaration
 ├── CHANGELOG.md                  # Version history
 ├── CONTRIBUTING.md               # Contribution guide
 ├── LICENSE                       # MIT
