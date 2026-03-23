@@ -538,9 +538,12 @@ _priority() {
 output_pretty() {
   local w=62
   local test_status="None"
+  local test_marker=""
   if [ "$R_TEST_COUNT" -gt 0 ]; then
     test_status="$R_TEST_RUNNER configured"
     [ "$R_HAS_COVERAGE" = "true" ] && test_status="$test_status + coverage"
+  else
+    test_marker=" CRITICAL"
   fi
 
   local p1 p2 p3
@@ -556,6 +559,18 @@ output_pretty() {
   local db_line="$R_DB_TYPE"
   [ "$R_DB_TYPE" != "None" ] && db_line="$R_DB_TYPE ($R_DB_TABLES tables)"
 
+  # Security status
+  local sec_line="$R_SECURITY_ISSUES issues"
+  [ "$R_SECURITY_ISSUES" -gt 0 ] && sec_line="$R_SECURITY_ISSUES issues found"
+
+  # Bundle/dead code line
+  local bundle_line="${R_NODE_MODULES_MB}MB node_modules"
+  [ "$R_DIST_MB" -gt 0 ] && bundle_line="$bundle_line · ${R_DIST_MB}MB dist"
+
+  # Contributor info
+  local contrib_line="$R_CONTRIBUTOR_COUNT contributors"
+  [ "$R_CONTRIBUTOR_COUNT" -le 1 ] && contrib_line="solo project"
+
   local bw=$((w - 3))
   echo ""
   printf "  ╔"; printf '%0.s═' $(seq 1 $w); printf "╗\n"
@@ -567,12 +582,26 @@ output_pretty() {
   printf "  ║  %-${bw}s║\n" "Database   : $db_line"
   printf "  ║  %-${bw}s║\n" "Auth       : $R_AUTH"
   printf "  ║  %-${bw}s║\n" "Deploy     : $R_DEPLOY (CI: $R_CI_TOOL)"
-  printf "  ║  %-${bw}s║\n" "Tests      : $R_TEST_COUNT files ($test_status)"
-  printf "  ║  %-${bw}s║\n" "Tech Debt  : $R_TODO_COUNT TODOs · $R_FIXME_COUNT FIXMEs"
-  printf "  ║  %-${bw}s║\n" "Git Health : $R_COMMIT_COUNT commits · $R_BRANCH_COUNT branches"
-  printf "  ║  %-${bw}s║\n" "Security   : $R_SECURITY_ISSUES issues"
+  printf "  ║  %-${bw}s║\n" "Tests      : $R_TEST_COUNT files${test_marker} ($test_status)"
+  printf "  ║  %-${bw}s║\n" "Tech Debt  : $R_TODO_COUNT TODOs · $R_FIXME_COUNT FIXMEs · $R_HACK_COUNT HACKs"
+  printf "  ║  %-${bw}s║\n" "Git Health : $R_COMMIT_COUNT commits · $R_BRANCH_COUNT branches · $contrib_line"
+  printf "  ║  %-${bw}s║\n" "Bundle     : $bundle_line"
+  printf "  ║  %-${bw}s║\n" "Security   : $sec_line"
+  if [ "$R_USE_CLIENT" -gt 0 ]; then
+    printf "  ║  %-${bw}s║\n" "Client     : $R_USE_CLIENT 'use client' directives"
+  fi
   printf "  ║  %-${bw}s║\n" ""
+  # Build ASCII progress bar (24 chars wide, using # and -)
+  local bar_filled=$((H_SCORE * 24 / 100))
+  local bar_empty=$((24 - bar_filled))
+  local ascii_bar=""
+  local i=0
+  while [ $i -lt $bar_filled ]; do ascii_bar="${ascii_bar}#"; i=$((i + 1)); done
+  i=0
+  while [ $i -lt $bar_empty ]; do ascii_bar="${ascii_bar}-"; i=$((i + 1)); done
+
   printf "  ║  %-${bw}s║\n" "HEALTH SCORE: ${H_SCORE}/100 — ${H_RATING}"
+  printf "  ║  %-${bw}s║\n" "[${ascii_bar}]"
   printf "  ║  %-${bw}s║\n" ""
   printf "  ║  %-${bw}s║\n" "Top 3 Priorities:"
   printf "  ║  %-${bw}s║\n" "1. $p1"

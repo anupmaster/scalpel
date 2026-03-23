@@ -72,16 +72,17 @@ Run the standalone scanner. No subscription. No API keys. No tokens. **Pure bash
   ║                                                              ║
   ║  Project    : acme-dashboard                                 ║
   ║  Stack      : Next.js 14 · TypeScript · Tailwind · Prisma   ║
-  ║  Database   : PostgreSQL via Supabase (23 tables, 4 views)   ║
-  ║  Auth       : Auth.js v5 (Google + GitHub OAuth)             ║
-  ║  Deploy     : Vercel (CI: GitHub Actions, 3 workflows)       ║
-  ║  Tests      : 0 files  CRITICAL                              ║
-  ║  Tech Debt  : 47 TODOs · 12 FIXMEs · 3 HACKs                ║
-  ║  Git Health : 1,247 commits · 5 branches · 3 contributors   ║
-  ║  Bundle     : 847KB first load — above 200KB threshold       ║
-  ║  Security   : 2 deps with known CVEs                         ║
+  ║  Database   : PostgreSQL via Supabase (23 tables)            ║
+  ║  Auth       : Auth.js v5                                     ║
+  ║  Deploy     : Vercel (CI: GitHub Actions)                    ║
+  ║  Tests      : 0 files CRITICAL (None)                        ║
+  ║  Tech Debt  : 47 TODOs · 12 FIXMEs · 3 HACKs               ║
+  ║  Git Health : 1247 commits · 5 branches · 3 contributors    ║
+  ║  Bundle     : 847MB node_modules                             ║
+  ║  Security   : 2 issues found                                 ║
   ║                                                              ║
   ║  HEALTH SCORE: 64/100 — Needs Improvement                   ║
+  ║  [###############---------]                                  ║
   ║                                                              ║
   ║  Top 3 Priorities:                                           ║
   ║  1. Add test infrastructure (0% coverage)                    ║

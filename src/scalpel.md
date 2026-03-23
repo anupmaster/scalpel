@@ -209,12 +209,13 @@ Present the report in this EXACT format:
 ║  Auth       : [provider] ([methods])                         ║
 ║  Deploy     : [platform] (CI: [tool])                        ║
 ║  Tests      : [count] files ([status])                       ║
-║  Tech Debt  : [TODO count] TODOs · [FIXME count] FIXMEs     ║
-║  Git Health : [commit count] commits · [branch count] branches║
-║  Bundle     : [size] first load ([status])                   ║
+║  Tech Debt  : [TODO count] TODOs · [FIXME count] FIXMEs · [HACK count] HACKs ║
+║  Git Health : [commit count] commits · [branch count] branches · [contributors] ║
+║  Bundle     : [size]MB node_modules                          ║
 ║  Security   : [finding count] issues                         ║
 ║                                                              ║
 ║  HEALTH SCORE: [XX]/100 — [rating]                           ║
+║  [########################------]                            ║
 ║                                                              ║
 ║  Top 3 Priorities:                                           ║
 ║  1. [highest impact issue]                                   ║
