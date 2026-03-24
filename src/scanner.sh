@@ -122,6 +122,7 @@ R_HAS_LOCKFILE="false" R_AUDIT_AVAILABLE="false" R_AUDIT_VULNS=0
 R_HAS_ENV_EXAMPLE="false"
 R_ERROR_HANDLING=0
 R_SRC_FILE_COUNT=0
+R_IMGS_NO_ALT=0 R_ARIA_COUNT=0 R_HAS_A11Y_TESTING="false"
 
 # Health score components
 H_SCORE=0 H_RATING=""
@@ -453,6 +454,46 @@ scan_error_handling() {
 }
 
 # ---------------------------------------------------------------------------
+# Accessibility scanning (informational — no scoring in v2)
+# ---------------------------------------------------------------------------
+scan_accessibility() {
+  # Count img tags without alt attributes
+  local img_total img_with_alt
+  img_total=$(grep -rn '<img' "$PROJECT_DIR" \
+    --include="*.tsx" --include="*.jsx" --include="*.html" 2>/dev/null | wc -l | tr -d ' ')
+  [ -z "$img_total" ] && img_total=0
+  img_with_alt=$(grep -rn '<img' "$PROJECT_DIR" \
+    --include="*.tsx" --include="*.jsx" --include="*.html" 2>/dev/null | grep -c 'alt=' 2>/dev/null || true)
+  img_with_alt=$(echo "$img_with_alt" | head -1 | tr -d '[:space:]')
+  [ -z "$img_with_alt" ] && img_with_alt=0
+  R_IMGS_NO_ALT=$((img_total - img_with_alt))
+  [ "$R_IMGS_NO_ALT" -lt 0 ] && R_IMGS_NO_ALT=0
+
+  # Count aria- attributes across source files
+  R_ARIA_COUNT=$(grep -rc 'aria-' "$PROJECT_DIR" \
+    --include="*.tsx" --include="*.jsx" --include="*.html" 2>/dev/null \
+    | awk -F: '{s+=$NF}END{print s}')
+  [ -z "$R_ARIA_COUNT" ] && R_ARIA_COUNT=0
+
+  # Count role= attributes across source files
+  local role_count
+  role_count=$(grep -rc 'role=' "$PROJECT_DIR" \
+    --include="*.tsx" --include="*.jsx" --include="*.html" 2>/dev/null \
+    | awk -F: '{s+=$NF}END{print s}')
+  [ -z "$role_count" ] && role_count=0
+  R_ARIA_COUNT=$((R_ARIA_COUNT + role_count))
+
+  # Check if an a11y testing library is in deps
+  R_HAS_A11Y_TESTING="false"
+  if _file_exists "package.json"; then
+    local pkg="$PROJECT_DIR/package.json"
+    if grep -qE '"axe-core"|"jest-axe"|"pa11y"|"@testing-library"' "$pkg" 2>/dev/null; then
+      R_HAS_A11Y_TESTING="true"
+    fi
+  fi
+}
+
+# ---------------------------------------------------------------------------
 # Health Score Calculation
 # ---------------------------------------------------------------------------
 calculate_score() {
@@ -708,6 +749,11 @@ output_json() {
       "audit_available": $(_json_bool "$R_AUDIT_AVAILABLE"),
       "audit_vulnerabilities": $R_AUDIT_VULNS,
       "has_env_example": $(_json_bool "$R_HAS_ENV_EXAMPLE")
+    },
+    "accessibility": {
+      "images_without_alt": $R_IMGS_NO_ALT,
+      "aria_attributes": $R_ARIA_COUNT,
+      "has_a11y_testing": $(_json_bool "$R_HAS_A11Y_TESTING")
     }
   },
   "health": {
@@ -789,6 +835,7 @@ output_markdown() {
 | **Tests** | $R_TEST_COUNT files ($test_status) |
 | **Tech Debt** | $R_TODO_COUNT TODOs, $R_FIXME_COUNT FIXMEs |
 | **Security** | $R_SECURITY_ISSUES issue(s) |
+| **Accessibility** | $R_IMGS_NO_ALT imgs missing alt, $R_ARIA_COUNT aria/role attrs, a11y testing: $R_HAS_A11Y_TESTING |
 
 ## Health Score: ${H_SCORE}/100 — ${H_RATING}
 
@@ -843,6 +890,7 @@ main() {
   scan_agent_ecosystem
   scan_dependencies
   scan_error_handling
+  scan_accessibility
   calculate_score
   generate_priorities
 

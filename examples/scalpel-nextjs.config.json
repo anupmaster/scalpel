@@ -1,0 +1,95 @@
+{
+  "$schema": "https://raw.githubusercontent.com/anupmaster/scalpel/main/schemas/config.schema.json",
+  "version": "2.0",
+  "scan": {
+    "dimensions": {
+      "include": ["all"],
+      "exclude": [],
+      "custom": [
+        {
+          "name": "nextjs-metadata",
+          "description": "Check that layout.tsx and page.tsx files export static or dynamic metadata for SEO",
+          "command": "count=$(grep -rln 'export const metadata\\|export function generateMetadata\\|export async function generateMetadata' --include='*.tsx' --include='*.ts' src/app/ | wc -l); total=$(find src/app -name 'layout.tsx' -o -name 'page.tsx' | wc -l); echo \"$count of $total files have metadata\"; test $count -gt 0",
+          "scoring": { "pass": 5, "fail": 0 }
+        },
+        {
+          "name": "nextjs-error-boundaries",
+          "description": "Check for error.tsx, loading.tsx, and not-found.tsx in route groups under the app directory",
+          "command": "found=$(find src/app -name 'error.tsx' -o -name 'loading.tsx' -o -name 'not-found.tsx' | wc -l); echo \"$found error boundary files found\"; test $found -ge 3",
+          "scoring": { "pass": 5, "fail": 0 }
+        },
+        {
+          "name": "nextjs-server-client-ratio",
+          "description": "Count the ratio of server components to client components (files with 'use client' directive)",
+          "command": "client=$(grep -rln \"'use client'\\|\\\"use client\\\"\" --include='*.tsx' --include='*.ts' src/ | wc -l); total=$(find src -name '*.tsx' -o -name '*.ts' | grep -v '\\.test\\.' | grep -v '\\.spec\\.' | wc -l); server=$((total - client)); echo \"Server: $server, Client: $client, Ratio: $server:$client\"; test $server -ge $client",
+          "scoring": { "pass": 5, "fail": 0 }
+        }
+      ]
+    },
+    "ignore_paths": [
+      ".next/",
+      "node_modules/",
+      ".vercel/"
+    ],
+    "secret_patterns": [
+      "NEXT_PUBLIC_.*SECRET",
+      "NEXTAUTH_SECRET",
+      "DATABASE_URL"
+    ]
+  },
+  "team": {
+    "max_agents": 4,
+    "default_model": "sonnet",
+    "architect_model": "opus",
+    "custom_roles": [
+      {
+        "name": "nextjs-specialist",
+        "trigger": "test -f next.config.js || test -f next.config.mjs || test -f next.config.ts",
+        "jurisdiction": [
+          "src/app/**"
+        ],
+        "prompt": "You are a Next.js App Router specialist. Audit the project for correct use of server and client components, proper metadata exports for SEO, appropriate use of route handlers, middleware configuration, correct data fetching patterns (server components over client-side fetching), proper use of loading/error/not-found conventions, image optimization with next/image, and font optimization with next/font. Flag any patterns that bypass App Router conventions such as manual fetch in useEffect where a server component would suffice."
+      }
+    ]
+  },
+  "scoring": {
+    "custom_rules": [
+      {
+        "name": "no-console-in-components",
+        "check": "! grep -rn 'console\\.log' --include='*.tsx' --include='*.jsx' src/components/ | grep -q '.'",
+        "deduction": -3,
+        "bonus": 0,
+        "message": "console.log statements found in components — remove or replace with a structured logger."
+      },
+      {
+        "name": "metadata-coverage",
+        "check": "grep -rln 'export const metadata\\|export function generateMetadata\\|export async function generateMetadata' --include='*.tsx' --include='*.ts' src/app/ | grep -q '.'",
+        "deduction": 0,
+        "bonus": 3,
+        "message": "Metadata exports detected in app routes — good SEO coverage."
+      },
+      {
+        "name": "error-boundaries-exist",
+        "check": "find src/app -name 'error.tsx' | grep -q '.'",
+        "deduction": 0,
+        "bonus": 2,
+        "message": "error.tsx boundary files found in app routes — graceful error handling in place."
+      }
+    ],
+    "thresholds": {
+      "excellent": 90,
+      "good": 75,
+      "needs_improvement": 60,
+      "at_risk": 40
+    }
+  },
+  "monitoring": {
+    "interval_minutes": 30,
+    "alert_threshold": 5,
+    "auto_start": false
+  },
+  "memory": {
+    "enabled": true,
+    "path": ".scalpel/memory.jsonl"
+  }
+}
