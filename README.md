@@ -22,7 +22,7 @@
 <br>
 
 <div align="center">
-  <video src="docs/future/social/scalpel-16x9.mp4" width="800" controls autoplay muted></video>
+  <video src="https://raw.githubusercontent.com/anupmaster/scalpel/main/docs/future/social/scalpel-16x9.mp4" width="800" controls autoplay muted></video>
 </div>
 
 <br>
