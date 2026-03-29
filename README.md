@@ -392,7 +392,7 @@ Scalpel makes **project intelligence** the first step, not an afterthought.
 
 ---
 
-## 🧵 Also From Absomind
+## 🧵 Also By Anup Karanjkar
 
 > **[Sutures](https://github.com/anupmaster/Sutures)** — Breakpoints for AI Agents
 >
