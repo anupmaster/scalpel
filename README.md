@@ -392,6 +392,16 @@ Scalpel makes **project intelligence** the first step, not an afterthought.
 
 ---
 
+## 🧵 Also From Absomind
+
+> **[Sutures](https://github.com/anupmaster/Sutures)** — Breakpoints for AI Agents
+>
+> The first open-source, framework-agnostic visual debugger with live intervention for multi-agent systems. Pause any agent, see what it sees, inject fixes, fork reality.
+>
+> *Scalpel cuts into your codebase. Sutures traces how everything connects.*
+
+---
+
 <p align="center">
   <strong>If Scalpel saved you time, consider giving it a star.</strong><br>
   <sub>It helps other developers find this tool.</sub>
